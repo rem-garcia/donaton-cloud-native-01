@@ -106,7 +106,7 @@ export default function RegistroUsuarios() {
             // reinicia el formulario.
             const nuevoUsuario: UsuarioResponse = json;
 
-            setUsuarios((usuariosActuales) => [...usuariosActuales, nuevoUsuario]);
+            setUsuarios((usuariosActuales) => [nuevoUsuario, ...usuariosActuales]);
 
             reset();
 

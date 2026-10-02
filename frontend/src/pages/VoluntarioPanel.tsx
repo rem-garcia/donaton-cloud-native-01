@@ -100,6 +100,10 @@ export default function VoluntarioPanel() {
                 setServerError(null);
             }
 
+            const nuevaDonacion: DonacionResponse = json;
+
+            setDonaciones((donacionesActuales) => [nuevaDonacion, ...donacionesActuales]);
+
             reset();
 
         } catch(error: any) {

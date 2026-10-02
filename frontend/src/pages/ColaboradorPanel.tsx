@@ -73,14 +73,19 @@ export default function ColaboradorPanel () {
                 setServerError(null);
             }
 
+            const nuevaNecesidad: NecesidadResponse = json;
+
+            setNecesidades((necesidadesActuales) => [nuevaNecesidad, ...necesidadesActuales]);
+
             reset();
+
         } catch(error: any) {
             setServerError(error?.message ?? "Error en el servidor");
         }
     };
 
     // Encabezados de las columnas de la tabla de donaciones
-    const necesidadesHeaders = ["Tipo", "Descripción", "Prioridad", "Comunidad"];
+    const necesidadesHeaders = ["Tipo", "Descripción", "Prioridad", "Comunidad", "Fecha-Reg"];
 
     const tiposNecesidad = [
         {id: 1, tipoValue: "alimentos", tipoTexto: "Alimentos"},
