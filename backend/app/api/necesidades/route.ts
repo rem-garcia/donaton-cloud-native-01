@@ -15,7 +15,7 @@ export const POST = async (request: NextRequest) => {
     const body = await request.json();
 
     try {
-        const nuevaNecesidad = necesidadService.crearNecesidad(body);
+        const nuevaNecesidad = await necesidadService.crearNecesidad(body);
 
         return NextResponse.json(nuevaNecesidad, { status: 201 });
     } catch(error) {
