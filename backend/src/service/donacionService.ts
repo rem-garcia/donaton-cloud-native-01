@@ -19,7 +19,7 @@ export class DonacionService {
             throw payloadParsed.error.issues?.[0]?.message;
         };
 
-        return await this.donacionRepository.createDonacion(payloadParsed.data);
+        return await this.donacionRepository.createDonacionConRecibo(payloadParsed.data);
     }
 
     async eliminarDonacion(id: number) {
