@@ -13,6 +13,7 @@ const corsOptions = {
 const rutasPublicas = [
     "/api/auth/login",
     "/api/auth/logout",
+    "/api/worker",
 ];
 
 // Reglas de autorizacion: si la ruta+metodo matchea, solo esos roles pueden pasar
