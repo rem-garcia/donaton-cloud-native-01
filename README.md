@@ -52,6 +52,15 @@ SUPABASE_SECRET_KEY="[SUPABASE_SECRET]"
 
 # JWT
 JWT_SECRET=[JWT_SECRET_KEY]
+
+# Cola de recibos (pgmq)
+# Secreto con el que pg_cron/pg_net autentica la llamada al worker (POST /api/worker/donaciones)
+WORKER_SECRET=[WORKER_SECRET]
+# Envio de correos con Resend (si faltan, en desarrollo el correo solo se imprime en consola)
+RESEND_API_KEY=[RESEND_API_KEY]
+MAIL_FROM="Donaton <no-reply@[DOMINIO]>"
+# Opcional: intentos antes de enviar un mensaje a la dead letter queue (por defecto 3)
+QUEUE_MAX_RETRIES=3
 ```
 La información secreta del archivo de variables de entorno es manejado solo por los miembros del equipo de este proyecto y no es compartida públicamente en este repositorio por temas de seguridad. De necesitarlas, contáctese con el equipo en cuestión.
 
@@ -138,3 +147,69 @@ La implementación del acceso basado en roles (*Role Based Access Control* o RBA
 
 Por otra parte, la gestión de las APIs de la plataforma son gestionadas desde la misma página web de Github.
 
+---
+
+## Cola de recibos de donación (pgmq).
+
+Al registrar una donación, el backend guarda la donación y encola el envío de un recibo al correo del donante. El correo no se envía en la misma petición: lo procesa un *worker* que lee la cola. Si el envío falla, se reintenta y, al agotar los intentos, el mensaje se guarda en una *dead letter queue* (DLQ) para revisarlo después.
+
+La cola usa la extensión [pgmq](https://supabase.com/docs/guides/queues/pgmq) de Supabase (Postgres), por lo que no requiere servicios adicionales.
+
+```mermaid
+flowchart LR
+    A["POST /api/donaciones"] -->|"1 transacción"| B[("donacion + mensaje en donaciones_recibo")]
+    B --> C["Worker: POST /api/worker/donaciones"]
+    C -->|"envío OK"| D["Archivado (pgmq.a_donaciones_recibo)"]
+    C -->|"falla, aún hay intentos"| E["Reintento con espera creciente"]
+    C -->|"intentos agotados o mensaje inválido"| F[("donaciones_recibo_dlq")]
+```
+
+### Colas.
+
+| Cola | Descripción |
+|------|-------------|
+| `donaciones_recibo` | Un mensaje por donación creada, pendiente de enviar su recibo. |
+| `donaciones_recibo_dlq` | Mensajes que agotaron sus reintentos o tenían un formato inválido. |
+
+### Configuración inicial.
+
+Las colas se crean con la migración `prisma/migrations/*_agrega_colas_pgmq` (`npx prisma migrate deploy`) o, a mano, desde el SQL Editor de Supabase:
+
+```sql
+select pgmq.create('donaciones_recibo');
+select pgmq.create('donaciones_recibo_dlq');
+```
+
+La extensión `pgmq` debe estar habilitada en el proyecto de Supabase (Integrations → Queues).
+
+### Worker.
+
+El endpoint `POST /api/worker/donaciones` procesa los mensajes pendientes. No usa la cookie de sesión: se autentica con la cabecera `Authorization: Bearer <WORKER_SECRET>`.
+
+```bash
+curl -X POST http://localhost:3000/api/worker/donaciones -H "Authorization: Bearer <WORKER_SECRET>"
+```
+
+Responde un resumen: `{"leidos":1,"enviados":1,"reintentos":0,"enDlq":0}`.
+
+En un entorno desplegado, el worker se invoca cada minuto con `pg_cron` y `pg_net` desde Supabase. El script está en `prisma/sql/pg_cron_worker_donaciones.sql` y se ejecuta una sola vez a mano, reemplazando la URL pública del backend y el `WORKER_SECRET`. No puede apuntar a `localhost`.
+
+### Reintentos y dead letter queue.
+
+- Cada fallo reprograma el mensaje con espera creciente (30 s, 60 s, 120 s, etc.).
+- Tras `QUEUE_MAX_RETRIES` intentos (3 por defecto), el mensaje se mueve a `donaciones_recibo_dlq` junto con el motivo del error.
+- Un mensaje con formato inválido va directo a la DLQ, porque reintentarlo no lo arregla.
+
+Para revisar el estado de las colas desde el SQL Editor de Supabase:
+
+```sql
+select * from pgmq.metrics_all();
+select * from pgmq.q_donaciones_recibo_dlq;   -- mensajes en la DLQ (tabla interna de pgmq).
+select * from pgmq.a_donaciones_recibo;       -- recibos ya procesados.
+```
+
+### Correo.
+
+Los correos se envían con [Resend](https://resend.com) usando las variables `RESEND_API_KEY` y `MAIL_FROM`. Si no están definidas y no se está en producción, el correo solo se imprime en la consola del backend.
+
+El sistema entrega los mensajes *al menos una vez*: si el correo sale pero falla el archivado, el donante podría recibirlo dos veces.
