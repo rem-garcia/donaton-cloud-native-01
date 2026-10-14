@@ -213,3 +213,12 @@ select * from pgmq.a_donaciones_recibo;       -- recibos ya procesados.
 Los correos se envían con [Resend](https://resend.com) usando las variables `RESEND_API_KEY` y `MAIL_FROM`. Si no están definidas y no se está en producción, el correo solo se imprime en la consola del backend.
 
 El sistema entrega los mensajes *al menos una vez*: si el correo sale pero falla el archivado, el donante podría recibirlo dos veces.
+
+### Politica de retencion
+Un job de pg_cron (`retencion-colas-donaciones`) corre diariamente a las 03:00 UTC y borra:
+- mensajes archivados (`pgmq.a_donaciones_recibo`) con mas de 7 dias,
+- mensajes del DLQ (`donaciones_recibo_dlq`) con mas de 30 dias.
+
+Es SQL puro y no depende del backend. Se programa una sola vez en el SQL Editor de Supabase
+con el script `backend/prisma/sql/pg_cron_retencion_colas.sql`. Para detenerlo:
+`select cron.unschedule('retencion-colas-donaciones');`
