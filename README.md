@@ -241,8 +241,8 @@ El sistema entrega los mensajes *al menos una vez*: si el correo sale pero falla
 ### Politica de retencion
 
 Un job de pg_cron (`retencion-colas-donaciones`) corre diariamente a las 03:00 UTC y borra:
-- mensajes archivados (`pgmq.a_donaciones_recibo`) con mas de 7 dias,
-- mensajes del DLQ (`donaciones_recibo_dlq`) con mas de 30 dias.
+- mensajes archivados (`pgmq.a_donaciones_recibo` y `pgmq.a_donaciones_admin`) con más de 7 días,
+- mensajes de los DLQ (`donaciones_recibo_dlq` y `donaciones_admin_dlq`) con más de 30 días.
 
 Es SQL puro y no depende del backend. Se programa una sola vez en el SQL Editor de Supabase
 con el script `backend/prisma/sql/pg_cron_retencion_colas.sql`. Para detenerlo:
