@@ -61,6 +61,8 @@ RESEND_API_KEY=[RESEND_API_KEY]
 MAIL_FROM="Donaton <no-reply@[DOMINIO]>"
 # Opcional: intentos antes de enviar un mensaje a la dead letter queue (por defecto 3)
 QUEUE_MAX_RETRIES=3
+# Opcional: correo del administrador que recibe el aviso de cada donacion (sin el, solo se registra en el log)
+ADMIN_EMAIL=[ADMIN_EMAIL]
 ```
 La información secreta del archivo de variables de entorno es manejado solo por los miembros del equipo de este proyecto y no es compartida públicamente en este repositorio por temas de seguridad. De necesitarlas, contáctese con el equipo en cuestión.
 
@@ -170,6 +172,8 @@ flowchart LR
 |------|-------------|
 | `donaciones_recibo` | Un mensaje por donación creada, pendiente de enviar su recibo. |
 | `donaciones_recibo_dlq` | Mensajes que agotaron sus reintentos o tenían un formato inválido. |
+| `donaciones_admin` | Un mensaje por donación creada, pendiente de avisar al administrador. |
+| `donaciones_admin_dlq` | Mensajes del suscriptor admin que agotaron sus reintentos o eran inválidos. |
 
 ### Configuración inicial.
 
@@ -178,13 +182,15 @@ Las colas se crean con la migración `prisma/migrations/*_agrega_colas_pgmq` (`n
 ```sql
 select pgmq.create('donaciones_recibo');
 select pgmq.create('donaciones_recibo_dlq');
+select pgmq.create('donaciones_admin');
+select pgmq.create('donaciones_admin_dlq');
 ```
 
 La extensión `pgmq` debe estar habilitada en el proyecto de Supabase (Integrations → Queues).
 
 ### Worker.
 
-El endpoint `POST /api/worker/donaciones` procesa los mensajes pendientes. No usa la cookie de sesión: se autentica con la cabecera `Authorization: Bearer <WORKER_SECRET>`.
+El endpoint `POST /api/worker/donaciones` procesa los mensajes pendientes. No usa la cookie de sesión: Procesa las colas de recibo y de admin, y responde un resumen: `{"leidos":1,"enviados":1,"reintentos":0,"enDlq":0,"admin":{"leidos":1,"procesados":1,"reintentos":0,"enDlq":0}}`
 
 ```bash
 curl -X POST http://localhost:3000/api/worker/donaciones -H "Authorization: Bearer <WORKER_SECRET>"
@@ -207,6 +213,24 @@ select * from pgmq.metrics_all();
 select * from pgmq.q_donaciones_recibo_dlq;   -- mensajes en la DLQ (tabla interna de pgmq).
 select * from pgmq.a_donaciones_recibo;       -- recibos ya procesados.
 ```
+### Publish/Subscribe.
+
+Al crear una donación se publica el evento `donacion.creada`. La función `publicarEvento` (`backend/src/lib/queue.ts`) copia el mensaje en la cola de cada suscriptor, dentro de la misma transacción que guarda la donación.
+
+```mermaid
+flowchart LR
+    A["POST /api/donaciones"] -->|"evento donacion.creada"| B[("donaciones_recibo")]
+    A -->|"evento donacion.creada"| C[("donaciones_admin")]
+    B --> D["Correo al donante"]
+    C --> E["Aviso al administrador"]
+```
+
+| Suscriptor | Cola | DLQ | Efecto |
+|---|---|---|---|
+| Recibo | `donaciones_recibo` | `donaciones_recibo_dlq` | Correo de agradecimiento al donante. |
+| Admin | `donaciones_admin` | `donaciones_admin_dlq` | Aviso al administrador (`ADMIN_EMAIL`; sin ella solo se registra en el log). |
+
+Cada suscriptor tiene su propio consumidor, sus propios reintentos y su propia DLQ, así que si uno falla no afecta al otro. Para agregar un suscriptor: crear su cola y su DLQ (migración), registrarla en `SUSCRIPCIONES` y escribir su consumidor.
 
 ### Correo.
 
@@ -215,6 +239,7 @@ Los correos se envían con [Resend](https://resend.com) usando las variables `RE
 El sistema entrega los mensajes *al menos una vez*: si el correo sale pero falla el archivado, el donante podría recibirlo dos veces.
 
 ### Politica de retencion
+
 Un job de pg_cron (`retencion-colas-donaciones`) corre diariamente a las 03:00 UTC y borra:
 - mensajes archivados (`pgmq.a_donaciones_recibo`) con mas de 7 dias,
 - mensajes del DLQ (`donaciones_recibo_dlq`) con mas de 30 dias.

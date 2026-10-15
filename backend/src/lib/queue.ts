@@ -11,6 +11,8 @@ type Db = Pick<PrismaClient, "$queryRaw">;
 export const COLAS = {
     reciboDonacion: "donaciones_recibo",
     reciboDonacionDlq: "donaciones_recibo_dlq",
+    adminDonacion: "donaciones_admin",
+    adminDonacionDlq: "donaciones_admin_dlq",
 } as const;
 
 export interface MensajeCola<T> {
@@ -87,4 +89,19 @@ export async function moverADlq(
 
         await tx.$queryRaw`select * from pgmq.delete(${colaOrigen}::text, ${mensaje.msgId}::bigint)`;
     });
+}
+export const TOPICOS = {
+    donacionCreada: "donacion.creada",
+} as const;
+
+const SUSCRIPCIONES: Record<string, string[]> = {
+    [TOPICOS.donacionCreada]: [COLAS.reciboDonacion, COLAS.adminDonacion],
+};
+
+export async function publicarEvento(db: Db, topico: string, mensaje: unknown) {
+    const colas = SUSCRIPCIONES[topico] ?? [];
+    for (const cola of colas) {
+      await enviarMensaje(db, cola, mensaje);
+    }
+    return colas;
 }
