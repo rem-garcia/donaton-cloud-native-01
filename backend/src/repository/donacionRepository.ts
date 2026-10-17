@@ -1,6 +1,6 @@
 import { DonacionCreateInput, DonacionUpsertArgs } from "@/prisma/generated/prisma/models";
 import { prisma } from "../lib/prisma";
-import { COLAS, enviarMensaje } from "../lib/queue";
+import { TOPICOS, publicarEvento } from "../lib/queue";
 
 export class DonacionRepository {
     async getDonaciones() {
@@ -19,7 +19,7 @@ export class DonacionRepository {
         return await prisma.$transaction(async (tx) => {
             const donacion = await tx.donacion.create({ data: data });
 
-            await enviarMensaje(tx, COLAS.reciboDonacion, {
+            await publicarEvento(tx, TOPICOS.donacionCreada, {
                 donacionId: donacion.id,
                 correoDonante: donacion.correoDonante,
                 nombreDonante: donacion.nombreDonante,
