@@ -13,6 +13,8 @@ export const COLAS = {
     reciboDonacionDlq: "donaciones_recibo_dlq",
     adminDonacion: "donaciones_admin",
     adminDonacionDlq: "donaciones_admin_dlq",
+    //se agregan colas de alertas:
+    alertas: "alertas_sistema",
 } as const;
 
 export interface MensajeCola<T> {
@@ -85,6 +87,15 @@ export async function moverADlq(
             intentos: mensaje.readCt,
             motivo,
             movidoEn: new Date().toISOString(),
+        });
+
+        // Alerta: avisa que un mensaje cayo en una DLQ (misma transaccion)
+        await enviarMensaje(tx, COLAS.alertas, {
+            tipo: "MensajeEnDlq",
+            dlq: colaDlq,
+            origen: colaOrigen,
+            msgIdOriginal: mensaje.msgId, motivo,
+            creadoEn: new Date().toISOString(),
         });
 
         await tx.$queryRaw`select * from pgmq.delete(${colaOrigen}::text, ${mensaje.msgId}::bigint)`;
