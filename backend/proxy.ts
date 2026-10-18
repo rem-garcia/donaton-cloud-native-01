@@ -19,6 +19,7 @@ const rutasPublicas = [
 // Reglas de autorizacion: si la ruta+metodo matchea, solo esos roles pueden pasar
 const reglasPorRol: { pattern: string; methods?: string[]; roles: Rol[] }[] = [
     { pattern: "/api/usuarios", roles: [Rol.ADMIN] },
+    { pattern: "/api/admin", roles: [Rol.ADMIN] },
     { pattern: "/api/necesidades", methods: ["POST", "PUT", "DELETE"], roles: [Rol.ADMIN, Rol.COLABORADOR] },
     { pattern: "/api/donaciones", methods: ["DELETE"], roles: [Rol.ADMIN] },
 ];

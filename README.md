@@ -247,3 +247,19 @@ Un job de pg_cron (`retencion-colas-donaciones`) corre diariamente a las 03:00 U
 Es SQL puro y no depende del backend. Se programa una sola vez en el SQL Editor de Supabase
 con el script `backend/prisma/sql/pg_cron_retencion_colas.sql`. Para detenerlo:
 `select cron.unschedule('retencion-colas-donaciones');`
+### Alertas y administración de colas
+
+Cuando un mensaje cae en una DLQ, `moverADlq` publica un aviso en la cola `alertas_sistema` (en la misma transacción que mueve el mensaje), con la DLQ de origen, el motivo y el id original.
+
+Los endpoints de administración están bajo `/api/admin` y solo los puede usar un usuario con rol `ADMIN` (regla en `proxy.ts`):
+
+| Endpoint | Qué hace |
+|---|---|
+| `GET /api/admin/colas` | Métricas de todas las colas (largo, antigüedad, total histórico) |
+| `GET /api/admin/colas/dlq?cola=...` | Lista los mensajes de una DLQ |
+| `POST /api/admin/colas/dlq/reprocesar` | Devuelve un mensaje de la DLQ a su cola de origen (`{ cola, msgId }`) |
+| `DELETE /api/admin/colas/dlq?cola=...` | Vacía una DLQ |
+| `GET /api/admin/alertas` | Lista las alertas pendientes |
+| `DELETE /api/admin/alertas?id=...` | Confirma una alerta (la archiva) |
+
+Después de mezclar, hay que correr `npx prisma migrate deploy` desde `backend/` para crear la cola `alertas_sistema`. Una sola persona debe hacerlo.
