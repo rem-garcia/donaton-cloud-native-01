@@ -1,0 +1,1 @@
+SELECT pgmq.create('rpc_solicitudes');
