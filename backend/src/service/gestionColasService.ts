@@ -5,11 +5,18 @@ import { COLAS, archivarMensaje, enviarMensaje } from "../lib/queue";
 const DLQS: string[] = [COLAS.reciboDonacionDlq, COLAS.adminDonacionDlq];
 const COLAS_ORIGEN: string[] = [COLAS.reciboDonacion, COLAS.adminDonacion];
 
+// Colas que se pueden consultar en el detalle (el nombre va dentro del SQL, asi que se valida).
+const COLAS_VISIBLES: string[] = Object.values(COLAS);
+
 interface FilaMensaje {
     msg_id: bigint;
     read_ct: bigint;
     enqueued_at: Date;
     message: unknown;
+}
+
+interface FilaArchivo extends FilaMensaje {
+    archived_at: Date;
 }
 
 interface FilaMetrica {
@@ -34,6 +41,12 @@ export class GestionColasService {
         }
     }
 
+    private validarCola(cola: string) {
+        if (!COLAS_VISIBLES.includes(cola)) {
+            throw new Error("Cola no valida");
+        }
+    }
+
     // Metricas de todas las colas (largo, antiguedad, total historico).
     async metricas() {
         const filas = await prisma.$queryRaw<FilaMetrica[]>`
@@ -48,6 +61,32 @@ export class GestionColasService {
             masAntiguoSeg: f.oldest_msg_age_sec,
             totalHistorico: Number(f.total_messages),
         }));
+    }
+
+    // Detalle de una cola: mensajes pendientes y ultimos procesados (archivados).
+    // Lee las tablas directo, sin pgmq.read, para no consumir ni ocultar mensajes.
+    async detalleCola(cola: string, limite = 20) {
+        this.validarCola(cola);
+        const tope = Math.min(Math.max(Math.trunc(limite) || 20, 1), 100);
+
+        const pendientes = await prisma.$queryRawUnsafe<FilaMensaje[]>(
+            `select msg_id, read_ct, enqueued_at, message from pgmq.q_${cola} order by msg_id desc limit ${tope}`
+        );
+
+        const procesados = await prisma.$queryRawUnsafe<FilaArchivo[]>(
+            `select msg_id, read_ct, enqueued_at, archived_at, message from pgmq.a_${cola} order by archived_at desc limit ${tope}`
+        );
+
+        const conteo = await prisma.$queryRawUnsafe<{ total: bigint }[]>(
+            `select count(*)::bigint as total from pgmq.a_${cola}`
+        );
+
+        return {
+            cola,
+            pendientes: pendientes.map(aMensaje),
+            procesados: procesados.map((f) => ({ ...aMensaje(f), archivadoEn: f.archived_at })),
+            totalProcesados: Number(conteo[0]?.total ?? 0),
+        };
     }
 
     async listarDlq(cola: string, limite = 50) {
