@@ -15,6 +15,7 @@ export const COLAS = {
     adminDonacionDlq: "donaciones_admin_dlq",
     //se agregan colas de alertas:
     alertas: "alertas_sistema",
+    solicitudes:"rpc_solicitudes",
 } as const;
 
 export interface MensajeCola<T> {
@@ -100,6 +101,35 @@ export async function moverADlq(
 
         await tx.$queryRaw`select * from pgmq.delete(${colaOrigen}::text, ${mensaje.msgId}::bigint)`;
     });
+}
+// Colas temporales para respuestas (patron request/reply).
+export async function crearCola(cola: string): Promise<void> {
+    await prisma.$executeRaw`select pgmq.create(${cola}::text)`;
+}
+
+export async function eliminarCola(cola: string): Promise<void> {
+    await prisma.$executeRaw`select pgmq.drop_queue(${cola}::text)`;
+}
+
+// Como leerMensajes, pero espera hasta 'esperaSeg' a que llegue un mensaje.
+export async function leerConEspera<T>(
+    cola: string,
+    vtSeg: number,
+    cantidad: number,
+    esperaSeg: number,
+    intervaloMs = 100
+): Promise<MensajeCola<T>[]> {
+    const filas = await prisma.$queryRaw<FilaMensaje[]>`
+        select msg_id, read_ct, enqueued_at, message
+        from pgmq.read_with_poll(${cola}::text, ${vtSeg}::integer, ${cantidad}::integer, ${esperaSeg}::integer, ${intervaloMs}::integer)
+    `;
+
+    return filas.map((f) => ({
+        msgId: Number(f.msg_id),
+        readCt: Number(f.read_ct),
+        enqueuedAt: f.enqueued_at,
+        message: f.message as T,
+    }));
 }
 export const TOPICOS = {
     donacionCreada: "donacion.creada",

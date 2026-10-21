@@ -263,3 +263,11 @@ Los endpoints de administración están bajo `/api/admin` y solo los puede usar 
 | `DELETE /api/admin/alertas?id=...` | Confirma una alerta (la archiva) |
 
 Después de mezclar, hay que correr `npx prisma migrate deploy` desde `backend/` para crear la cola `alertas_sistema`. Una sola persona debe hacerlo.
+
+### Mensajes síncronos (petición/respuesta)
+
+Además del flujo asíncrono, hay un patrón síncrono sobre pgmq: `GET /api/admin/sincrono/resumen-donaciones` (solo ADMIN) pide un resumen de donaciones y **espera la respuesta** en la misma llamada.
+
+1. El endpoint crea una cola temporal de respuesta (`rpc_resp_<id>`) y encola la solicitud en `rpc_solicitudes` con un `correlationId`.
+2. El responder lee la solicitud, calcula el resultado y lo publica en la cola de respuesta.
+3. El endpoint espera con `pgmq.read_with_poll` (máx. 10 s), recibe la respuesta, borra la cola temporal y responde. Si se agota el tiempo, devuelve 504.
