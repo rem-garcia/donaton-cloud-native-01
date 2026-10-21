@@ -15,6 +15,7 @@ import VoluntarioPanel from "../pages/VoluntarioPanel";
 import ColaboradorPanel from "../pages/ColaboradorPanel";
 import AdminDashboard from "../pages/AdminDashboard";
 import RegistroUsuarios from "../pages/RegistroUsuarios";
+import ColasPanel from "../pages/ColasPanel";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Rol } from "../types/rolEnum";
 
@@ -52,6 +53,12 @@ export default function RoutesDonaton () {
         <Route path="/usuarios" element={
           <ProtectedRoute rolesPermitidos={[Rol.ADMIN]}>
             <RegistroUsuarios />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/colas" element={
+          <ProtectedRoute rolesPermitidos={[Rol.ADMIN]}>
+            <ColasPanel />
           </ProtectedRoute>
         } />
       </Routes>

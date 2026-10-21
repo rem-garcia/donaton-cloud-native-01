@@ -3,7 +3,7 @@ import { necesidadSchema, type NecesidadType } from "../schemas/necesidadSchema"
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import type { NecesidadResponse } from "../dtos/necesidadResponseDto";
-import PanelHeader from "../components/panelheader";
+import PanelHeader from "../components/PanelHeader";
 
 export default function ColaboradorPanel () {
     const [ necesidades, setNecesidades ] = useState<NecesidadResponse[]>([]);

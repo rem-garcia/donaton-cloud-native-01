@@ -14,6 +14,7 @@
  *
  * Accesos directos disponibles:
  * - Gestion de usuarios
+ * - Colas de mensajes
  *
  * Comunicación con el backend:
  * - GET /api/donaciones → lista completa de donaciones.
@@ -27,7 +28,7 @@ import { type DonacionResponse } from "../dtos/donacionResponseDto";
 import { type NecesidadResponse } from "../dtos/necesidadResponseDto";
 import { type UsuarioResponse } from "../dtos/usuarioResponseDto";
 import { useNavigate } from "react-router";
-import PanelHeader from "../components/panelheader";
+import PanelHeader from "../components/PanelHeader";
 
 /**
  * Panel de administración del sistema Donaton.
@@ -148,6 +149,47 @@ export default function AdminDashboard () {
                                 <div className="flex flex-col">
                                     <span className="font-semibold text-navy">Gestionar usuarios</span>
                                     <span className="text-sm text-gray-500">Crear y administrar roles del sistema</span>
+                                </div>
+                            </div>
+
+                            <svg
+                                 className="w-5 h-5 text-gray-300 group-hover:text-teal transition-colors"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
+                            </svg>
+                        </div>
+
+                        {/* Colas de mensajes */}
+                        <div
+                            onClick={ () => navigate("/colas") }
+                            className="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6
+                            flex items-center justify-between
+                            hover:border-teal hover:shadow-md transition-all duration-200 cursor-pointer"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                                    <svg
+                                        className="w-6 h-6 text-blue-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                            d="M4 6h16M4 12h16M4 18h10"
+                                        />
+                                    </svg>
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-navy">Colas de mensajes</span>
+                                    <span className="text-sm text-gray-500">Monitorear colas, alertas y DLQ</span>
                                 </div>
                             </div>
 

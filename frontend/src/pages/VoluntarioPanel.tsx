@@ -19,7 +19,7 @@ import { donacionSchema, type DonacionType } from "../schemas/donacionSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import type { DonacionResponse } from "../dtos/donacionResponseDto";
-import PanelHeader from "../components/panelheader";
+import PanelHeader from "../components/PanelHeader";
 
 /**
  * Panel del voluntario para registro y consulta de donaciones en terreno.
