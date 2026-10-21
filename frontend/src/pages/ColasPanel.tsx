@@ -102,7 +102,14 @@ function ContenidoMensaje({ datos }: { datos: unknown }) {
         </div>
     );
 }
-
+interface ResumenSincrono {
+    correlationId: string;
+    tiempoMs: number;
+    resumen: {
+        totalDonaciones: number;
+        porTipo: { tipo: string; donaciones: number; cantidadTotal: number }[];
+    };
+}
 async function pedir<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
     const res = await fetch(`${API_URL}${ruta}`, { credentials: "include", ...opciones });
     const data = await res.json();
@@ -111,6 +118,7 @@ async function pedir<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
 }
 
 export default function ColasPanel() {
+    
     const [metricas, setMetricas] = useState<MetricaCola[]>([]);
     const [alertas, setAlertas] = useState<MensajeCola<Alerta>[]>([]);
     const [dlq, setDlq] = useState(DLQS[0]);
@@ -119,6 +127,8 @@ export default function ColasPanel() {
     const [detalle, setDetalle] = useState<DetalleCola | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [cargando, setCargando] = useState(true);
+    const [sincrona, setSincrona] = useState<ResumenSincrono | null>(null);
+    const [esperando, setEsperando] = useState(false);
 
     const navigate = useNavigate();
 
@@ -188,6 +198,19 @@ export default function ColasPanel() {
             cargarTodo();
         } catch (e) {
             setError(e instanceof Error ? e.message : "Error al confirmar la alerta");
+        }
+    };
+
+        const pedirResumenSincrono = async () => {
+        setEsperando(true);
+        setSincrona(null);
+        try {
+            setSincrona(await pedir<ResumenSincrono>("/api/admin/sincrono/resumen-donaciones"));
+            cargarTodo();
+        } catch (e) {
+            setError(e instanceof Error ? e.message : "Error en la petición síncrona");
+        } finally {
+            setEsperando(false);
         }
     };
 
@@ -362,6 +385,54 @@ export default function ColasPanel() {
                                     </button>
                                 </div>
                             ))
+                        )}
+                    </div>
+                </div>
+                                {/* Petición síncrona (request/reply) */}
+                <div className="flex flex-col gap-4">
+                    <h2 className="text-lg font-semibold text-navy">Petición síncrona</h2>
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col gap-4">
+                        <div className="flex items-center justify-between gap-4 flex-wrap">
+                            <p className="text-sm text-gray-500">
+                                Envía una solicitud por la cola y espera la respuesta en la misma llamada.
+                            </p>
+                            <button
+                                onClick={pedirResumenSincrono}
+                                disabled={esperando}
+                                className="text-sm px-3 py-1.5 rounded-lg bg-teal/10 text-teal hover:bg-teal hover:text-white transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            >
+                                {esperando ? "Esperando respuesta..." : "Pedir resumen de donaciones"}
+                            </button>
+                        </div>
+
+                        {sincrona && (
+                            <div className="flex flex-col gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div className="bg-gray-50 rounded-xl p-3 flex flex-col">
+                                        <span className="text-xs text-gray-400">ID de solicitud</span>
+                                        <span className="text-sm font-semibold text-navy break-all">{sincrona.correlationId}</span>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-3 flex flex-col">
+                                        <span className="text-xs text-gray-400">Tiempo de respuesta</span>
+                                        <span className="text-lg font-semibold text-navy">{sincrona.tiempoMs} ms</span>
+                                    </div>
+                                    <div className="bg-gray-50 rounded-xl p-3 flex flex-col">
+                                        <span className="text-xs text-gray-400">Total de donaciones</span>
+                                        <span className="text-lg font-semibold text-navy">{sincrona.resumen.totalDonaciones}</span>
+                                    </div>
+                                </div>
+
+                                <div className="bg-gray-50 rounded-lg p-3 flex flex-col gap-1 text-sm">
+                                    {sincrona.resumen.porTipo.map((t) => (
+                                        <div key={t.tipo} className="flex justify-between gap-4">
+                                            <span className="text-gray-500">{t.tipo}</span>
+                                            <span className="text-navy font-medium">
+                                                {t.donaciones} donaciones · cantidad {t.cantidadTotal}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
