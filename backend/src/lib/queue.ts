@@ -16,6 +16,8 @@ export const COLAS = {
     //se agregan colas de alertas:
     alertas: "alertas_sistema",
     solicitudes:"rpc_solicitudes",
+    stream: "donaciones_stream",
+    streamAlertas: "donaciones_alertas",
 } as const;
 
 export interface MensajeCola<T> {

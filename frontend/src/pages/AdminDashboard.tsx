@@ -206,6 +206,47 @@ export default function AdminDashboard () {
                                 />
                             </svg>
                         </div>
+                        
+                        {/* Streaming de donaciones */}
+                        <div
+                            onClick={ () => navigate("/streaming") }
+                            className="group bg-white rounded-2xl shadow-sm border border-gray-100 p-6
+                            flex items-center justify-between
+                            hover:border-teal hover:shadow-md transition-all duration-200 cursor-pointer"
+                        >
+                            <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
+                                    <svg
+                                        className="w-6 h-6 text-blue-600"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        viewBox="0 0 24 24"
+                                    >
+                                        <path
+                                            strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"
+                                        />
+                                    </svg>
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <span className="font-semibold text-navy">Streaming de donaciones</span>
+                                    <span className="text-sm text-gray-500">Totales en tiempo real y alertas del flujo</span>
+                                </div>
+                            </div>
+
+                            <svg
+                                 className="w-5 h-5 text-gray-300 group-hover:text-teal transition-colors"
+                                 fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                            >
+                                <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={2}
+                                    d="M9 5l7 7-7 7"
+                                />
+                            </svg>
+                        </div>
 
                         {/* Espacio para agregar otros enlaces */}
                     </div>

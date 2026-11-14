@@ -18,6 +18,7 @@ import RegistroUsuarios from "../pages/RegistroUsuarios";
 import ColasPanel from "../pages/ColasPanel";
 import { ProtectedRoute } from "./ProtectedRoute";
 import { Rol } from "../types/rolEnum";
+import StreamPanel from "../pages/StreamPanel";
 
 /**
 * Rutas de navegación de la plataforma web
@@ -59,6 +60,12 @@ export default function RoutesDonaton () {
         <Route path="/colas" element={
           <ProtectedRoute rolesPermitidos={[Rol.ADMIN]}>
             <ColasPanel />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/streaming" element={
+          <ProtectedRoute rolesPermitidos={[Rol.ADMIN]}>
+            <StreamPanel />
           </ProtectedRoute>
         } />
       </Routes>
