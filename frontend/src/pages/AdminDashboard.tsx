@@ -29,6 +29,7 @@ import { type NecesidadResponse } from "../dtos/necesidadResponseDto";
 import { type UsuarioResponse } from "../dtos/usuarioResponseDto";
 import { useNavigate } from "react-router";
 import PanelHeader from "../components/PanelHeader";
+import { API_URL } from "../config";
 
 /**
  * Panel de administración del sistema Donaton.
@@ -49,9 +50,9 @@ export default function AdminDashboard () {
     // Promise.all(). Como son asincronas, se realizan al mismo tiempo.
     useEffect(() => {
         Promise.all([
-            fetch("http://localhost:3000/api/donaciones", { credentials: "include" }).then((response) => response.json()),
-            fetch("http://localhost:3000/api/necesidades", { credentials: "include" }).then((response) => response.json()),
-            fetch("http://localhost:3000/api/usuarios", { credentials: "include" }).then((response) => response.json())
+            fetch(API_URL + "/api/donaciones", { credentials: "include" }).then((response) => response.json()),
+            fetch(API_URL + "/api/necesidades", { credentials: "include" }).then((response) => response.json()),
+            fetch(API_URL + "/api/usuarios", { credentials: "include" }).then((response) => response.json())
         ])
         .then(([donacion, necesidad, usuario]) => {
             setDonaciones(donacion)

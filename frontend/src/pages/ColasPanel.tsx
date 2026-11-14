@@ -16,7 +16,7 @@ import { useNavigate } from "react-router";
 import PanelHeader from "../components/PanelHeader";
 import type { Alerta, DetalleCola, MensajeCola, MensajeDlq, MetricaCola } from "../dtos/colaResponseDto";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 // Deben coincidir con las DLQS de gestionColasService.ts
 const DLQS = ["donaciones_recibo_dlq", "donaciones_admin_dlq"];

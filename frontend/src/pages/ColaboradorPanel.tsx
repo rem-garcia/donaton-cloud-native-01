@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import type { NecesidadResponse } from "../dtos/necesidadResponseDto";
 import PanelHeader from "../components/PanelHeader";
+import { API_URL } from "../config";
 
 export default function ColaboradorPanel () {
     const [ necesidades, setNecesidades ] = useState<NecesidadResponse[]>([]);
@@ -23,7 +24,7 @@ export default function ColaboradorPanel () {
     useEffect(() => {
         const cargarNecesidades = async () => {
             try {
-                const response = await fetch("http://localhost:3000/api/necesidades", {
+                const response = await fetch(API_URL + "/api/necesidades", {
                     credentials: "include"
                 });
 
@@ -51,7 +52,7 @@ export default function ColaboradorPanel () {
 
     const onSubmitNecesidad: SubmitHandler<NecesidadType> = async (data) => {
         try {
-            const response = await fetch("http://localhost:3000/api/necesidades", {
+            const response = await fetch(API_URL + "/api/necesidades", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

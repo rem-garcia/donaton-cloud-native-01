@@ -21,6 +21,7 @@ import { usuarioSchema, type RegistroUsuarioType } from "../schemas/usuarioSchem
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router";
 import { Rol } from "../types/rolEnum";
+import { API_URL } from "../config";
 
 /**
  * Página de gestión de usuarios internos del sistema.
@@ -51,7 +52,7 @@ export default function RegistroUsuarios() {
     useEffect(() => {
         const cargarUsuarios = async () => {
             try {
-                const response = await fetch("http://localhost:3000/api/usuarios", {
+                const response = await fetch(API_URL + "/api/usuarios", {
                     credentials: "include"
                 });
 
@@ -79,7 +80,7 @@ export default function RegistroUsuarios() {
 
     const onSubmitUsuario: SubmitHandler<RegistroUsuarioType> = async (data) => {
         try {
-            const response = await fetch("http://localhost:3000/api/usuarios", {
+            const response = await fetch(API_URL + "/api/usuarios", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

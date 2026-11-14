@@ -20,6 +20,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState } from "react";
 import type { DonacionResponse } from "../dtos/donacionResponseDto";
 import PanelHeader from "../components/PanelHeader";
+import { API_URL } from "../config";
 
 /**
  * Panel del voluntario para registro y consulta de donaciones en terreno.
@@ -48,7 +49,7 @@ export default function VoluntarioPanel() {
     useEffect(() => {
         const cargarDonaciones = async () => {
             try {
-                const response = await fetch("http://localhost:3000/api/donaciones", {
+                const response = await fetch(API_URL + "/api/donaciones", {
                     credentials: "include"
                 });
 
@@ -78,7 +79,7 @@ export default function VoluntarioPanel() {
 
     const onSubmitDonacion: SubmitHandler<DonacionType> = async (data) => {
         try {
-            const response = await fetch("http://localhost:3000/api/donaciones", {
+            const response = await fetch(API_URL + "/api/donaciones", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 credentials: "include",

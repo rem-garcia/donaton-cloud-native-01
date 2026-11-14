@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Rol } from "../types/rolEnum";
 import type { LoginType } from "../schemas/loginSchema";
 
-const API_URL = import.meta.env.VITE_API_URL;
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 
 interface Usuario {
   id: number;
