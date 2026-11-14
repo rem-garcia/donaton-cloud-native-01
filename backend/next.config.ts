@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     // Ver mas en:
     // - https://docs.docker.com/guides/nextjs/containerize/
     // - https://nextjs.org/docs/pages/getting-started/deploying
-    output: "standalone"
+    output: process.env.VERCEL ? undefined : "standalone"
 };
 
 export default nextConfig;
