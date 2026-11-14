@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://TU_BACKEND/api/:path*" },
+    { "source": "/api/:path*", "destination": "https://donaton-backend.vercel.app/api/:path*" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
